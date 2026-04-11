@@ -24,10 +24,17 @@ def load_dataset(name: str):
         return load_steel_plates_fault()
     elif name == "shoppers":
         return load_shoppers()
-    else: ValueError(f"Dataset {name} not found")
+    else: 
+        raise ValueError(f"Dataset {name} not found")
+
+def drop_high_cardinality(x, threshold=20):
+    cat_cols = x.select_dtypes(["object", "bool"]).columns.tolist()
+    to_drop = [col for col in cat_cols if x[col].nunique() > threshold]
+    if to_drop:
+        print(f"  Dropping high-cardinality columns: {to_drop}")
+    return x.drop(columns=to_drop)
 
 def split_and_preprocess(x, y, categorical_features, numerical_features, task="classification"):
-    # 60/20/20 train/val/test split
     x_temp, x_test, y_temp, y_test = train_test_split(x, y, test_size=0.2, random_state=seed)
     x_train, x_val, y_train, y_val = train_test_split(x_temp, y_temp, test_size=0.25, random_state=seed)
 
@@ -39,31 +46,72 @@ def split_and_preprocess(x, y, categorical_features, numerical_features, task="c
     )
 
     x_train = preprocessor.fit_transform(x_train)
-    x_val = preprocessor.transform(x_val)
-    x_test = preprocessor.transform(x_test)
+    x_val   = preprocessor.transform(x_val)
+    x_test  = preprocessor.transform(x_test)
+
+    # Convert sparse matrices to dense numpy arrays
+    if hasattr(x_train, "toarray"):
+        x_train = x_train.toarray()
+        x_val   = x_val.toarray()
+        x_test  = x_test.toarray()
+
+    x_train = np.array(x_train, dtype=np.float32)
+    x_val   = np.array(x_val,   dtype=np.float32)
+    x_test  = np.array(x_test,  dtype=np.float32)
+
+    y_train = np.array(y_train)
+    y_val   = np.array(y_val)
+    y_test  = np.array(y_test)
 
     return x_train, x_val, x_test, y_train, y_val, y_test, preprocessor
 
-def load_diabetes():
-    df = pd.read_csv("data/Diabetes 130-US Hospitals (classification, 100k, 55, mixed/diabetic_data.csv", na_values="?").dropna()
+def inspect_nulls(df, name):
+    null_pct = (df.isnull().sum() / len(df) * 100).sort_values(ascending=False)
+    print(f"\n{name} — shape: {df.shape}")
+    print(null_pct[null_pct > 0].to_string())
 
+def drop_sparse_columns(df, threshold=0.4):
+    """Drop columns where more than `threshold` fraction of values are missing."""
+    null_frac = df.isnull().sum() / len(df)
+    sparse_cols = null_frac[null_frac > threshold].index.tolist()
+    return df.drop(columns=sparse_cols)
+
+def load_diabetes():
+    df = pd.read_csv(
+        "data/Diabetes 130-US Hospitals (classification, 100k, 55, mixed/diabetic_data.csv",
+        na_values="?",
+        low_memory=False
+    )
+    df = drop_sparse_columns(df, threshold=0.4)
+    df = df.dropna()
+    df = df.sample(n=15000, random_state=42)
+    
     y = (df["readmitted"] == "<30").astype(int)
-    x = df.drop(columns=["readmitted", "encounter_id", "patient_nbr"])
+    x = df.drop(columns=["readmitted", "encounter_id", "patient_nbr"], errors="ignore")
+    x = drop_high_cardinality(x, threshold=20)
 
     cat_features, num_features = get_feature_types(x)
     return split_and_preprocess(x, y, cat_features, num_features, task="classification")
 
 def load_housing():
-    df = pd.read_csv("data/Ames Housing (regression, 1.5k, 79, mixed)/AmesHousing.csv").dropna()
-    
+    df = pd.read_csv(
+        "data/Ames Housing (regression, 1.5k, 79, mixed)/AmesHousing.csv",
+        low_memory=False
+    )
+    df = drop_sparse_columns(df, threshold=0.4)
+    df = df.dropna()
+
     y = df["SalePrice"].values
-    x = df.drop(columns=["SalePrice", "Order", "PID"])
+    x = df.drop(columns=["SalePrice", "Order", "PID"], errors="ignore")
+    x = drop_high_cardinality(x, threshold=10)  
 
     cat_features, num_features = get_feature_types(x)
     return split_and_preprocess(x, y, cat_features, num_features, task="regression")
 
 def load_wine_quality():
-    df = pd.read_csv("data/Wine Quality (Red + White) (regression, 6.5k, 11)/WineQT.csv").dropna()
+    df = pd.read_csv("data/Wine Quality (Red + White) (regression, 6.5k, 11)/WineQT.csv", low_memory=False)
+    df = drop_sparse_columns(df, threshold=0.4)
+    df = df.dropna()
     
     y = df["quality"].values.astype(float)
     x = df.drop(columns=["quality"])
@@ -73,18 +121,30 @@ def load_wine_quality():
 
 
 def load_steel_plates_fault():
-    df = pd.read_csv("data/Steel Plates Fault (classification, 1.9k, 33)/faults.csv").dropna()
-    
+    df = pd.read_csv("data/Steel Plates Fault (classification, 1.9k, 33)/faults.csv", low_memory=False)
+    df = drop_sparse_columns(df, threshold=0.4)
+    df = df.dropna()
+
     fault_cols = ["Pastry", "Z_Scratch", "K_Scratch", "Stains", 
                   "Dirtiness", "Bumps", "Other_Faults"]
-    y = df[fault_cols].values.argmax(axis=1)
-    x = df.drop(columns=fault_cols)
+    fault_cols = [c for c in fault_cols if c in df.columns]
+
+    if fault_cols:
+        y = df[fault_cols].values.argmax(axis=1)
+        x = df.drop(columns=fault_cols)
+    else:
+        target_col = df.columns[-1]
+        le = LabelEncoder()
+        y = le.fit_transform(df[target_col].values)
+        x = df.drop(columns=[target_col])
 
     cat_features, num_features = get_feature_types(x)
     return split_and_preprocess(x, y, cat_features, num_features, task="classification")
 
 def load_shoppers():
-    df = pd.read_csv("data/Online Shoppers Intention (classification, 12k, 17, mixed)/online_shoppers_intention.csv").dropna()
+    df = pd.read_csv("data/Online Shoppers Intention (classification, 12k, 17, mixed)/online_shoppers_intention.csv", low_memory=False)
+    df = drop_sparse_columns(df, threshold=0.4)
+    df = df.dropna()
 
     y = df["Revenue"].astype(int).values
     x = df.drop(columns=["Revenue"])
