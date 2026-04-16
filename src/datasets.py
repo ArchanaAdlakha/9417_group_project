@@ -63,7 +63,20 @@ def split_and_preprocess(x, y, categorical_features, numerical_features, task="c
     y_val   = np.array(y_val)
     y_test  = np.array(y_test)
 
-    return x_train, x_val, x_test, y_train, y_val, y_test, preprocessor
+    # Build feature names that match the preprocessed column order:
+    #   ColumnTransformer puts "num" columns first, then "cat" columns.
+    num_names = list(numerical_features)
+    if categorical_features:
+        cat_names = (
+            preprocessor.named_transformers_["cat"]
+            .get_feature_names_out(categorical_features)
+            .tolist()
+        )
+    else:
+        cat_names = []
+    feature_names = num_names + cat_names
+
+    return x_train, x_val, x_test, y_train, y_val, y_test, feature_names
 
 def inspect_nulls(df, name):
     null_pct = (df.isnull().sum() / len(df) * 100).sort_values(ascending=False)

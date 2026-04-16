@@ -1,4 +1,6 @@
 import time
+import contextlib
+import io
 import numpy as np
 from xrfm import xRFM
 from xgboost import XGBClassifier, XGBRegressor
@@ -120,7 +122,11 @@ def infer_and_time(model, x_test):
     return preds, infer_time
 
 def get_xrfm(task="classification", **kwargs):
-    return xRFM(task=task, **kwargs)
+    # xRFM.__init__ has a stray `print(default_rfm_params)` (prints "None"
+    # when no default_rfm_params is passed).  Suppress it here so it doesn't
+    # pollute training output.
+    with contextlib.redirect_stdout(io.StringIO()):
+        return xRFM(task=task, **kwargs)
 
 def get_xgboost(task="classification", **kwargs):
     if task == "classification":
