@@ -164,4 +164,3 @@ def load_shoppers():
 
     cat_features, num_features = get_feature_types(x)
     return split_and_preprocess(x, y, cat_features, num_features, task="classification")
-

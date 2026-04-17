@@ -38,12 +38,12 @@ def compute_val_score(model, x_val, y_val, task):
         preds = model.predict(x_val)
         return 1 - accuracy_score(y_val, preds)
 
-def tune_xgboost(x_train, y_train, x_val, y_val, task, n_trials=20):
+def tune_xgboost(x_train, y_train, x_val, y_val, task, num_classes=2, n_trials=20):
     best_score, best_params = np.inf, None
     np.random.seed(seed)
     for _ in range(n_trials):
         params = {k: np.random.choice(v) for k, v in XGBOOST_PARAM_GRID.items()}
-        model = get_xgboost(task, **params)
+        model = get_xgboost(task, num_classes=num_classes, **params)
         model.fit(x_train, y_train)
         score = compute_val_score(model, x_val, y_val, task)
         if score < best_score:
@@ -122,15 +122,19 @@ def infer_and_time(model, x_test):
     return preds, infer_time
 
 def get_xrfm(task="classification", **kwargs):
-    # xRFM.__init__ has a stray `print(default_rfm_params)` (prints "None"
+    # xRFM.__init__ has a stray print(default_rfm_params) (prints "None"
     # when no default_rfm_params is passed).  Suppress it here so it doesn't
     # pollute training output.
     with contextlib.redirect_stdout(io.StringIO()):
         return xRFM(task=task, **kwargs)
 
-def get_xgboost(task="classification", **kwargs):
+def get_xgboost(task="classification", num_classes=2, **kwargs):
     if task == "classification":
-        return XGBClassifier(random_state=42, eval_metric="logloss", **kwargs)
+        if num_classes > 2:
+            return XGBClassifier(random_state=42, eval_metric="mlogloss",
+                                 objective="multi:softprob", num_class=num_classes, **kwargs)
+        else:
+            return XGBClassifier(random_state=42, eval_metric="logloss", **kwargs)
     return XGBRegressor(random_state=42, **kwargs)
 
 def get_random_forest(task="classification", **kwargs):

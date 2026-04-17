@@ -11,6 +11,7 @@ from src.interpretability import (
     plot_interpretability_comparison,
     compute_rank_correlations,
 )
+import numpy as np
 import pandas as pd
 
 datasets = ["diabetes", "housing", "wine", "steel", "shoppers"]
@@ -46,6 +47,8 @@ for dataset in datasets:
     x_train, x_val, x_test, y_train, y_val, y_test, feature_names = data
     print(f"  Train: {x_train.shape}, Val: {x_val.shape}, Test: {x_test.shape}")
 
+    num_classes = len(np.unique(y_train)) if task == "classification" else 2
+
     tuners = {
         "xRFM":         (tune_xrfm,         get_xrfm),
         "XGBoost":      (tune_xgboost,       get_xgboost),
@@ -54,13 +57,14 @@ for dataset in datasets:
 
     for model_name, (tune_fn, model_fn) in tuners.items():
         print(f"\n  ── {model_name} ──")
-        
+
         try:
             print(f"    Tuning...")
-            best_params = tune_fn(x_train, y_train, x_val, y_val, task)
+            xgb_kwargs = {"num_classes": num_classes} if model_name == "XGBoost" else {}
+            best_params = tune_fn(x_train, y_train, x_val, y_val, task, **xgb_kwargs)
 
             print(f"    Training final model with best params...")
-            model = model_fn(task=task, **best_params)
+            model = model_fn(task=task, **xgb_kwargs, **best_params)
             model, train_time = train_and_time(model, x_train, y_train, x_val, y_val)
 
             print(f"    Running inference...")
@@ -100,8 +104,6 @@ print("\nDone. Results saved to results/main_table.csv")
 # ---------------------------------------------------------------------------
 # AGOP extraction verification — uses the first successfully trained xRFM
 # ---------------------------------------------------------------------------
-import numpy as np
-
 if _agop_test_state["model"] is not None:
     _test_model    = _agop_test_state["model"]
     _test_features = _agop_test_state["feature_names"]
