@@ -1,3 +1,19 @@
+"""
+This program:
+1. Loads 5 datasets.
+2. Tunes and trains 3 model familiies (xRFM, XGBoost, Random Forest)
+3. Evaluates performance +  runtime
+4. Runs AGOP interpretability checks for xRFM
+5. Runs interpretability comparison (AGOP vs PCA vs MI vs Permutation)
+6. Runs scaling experiments
+
+Outputs:
+- results/main_table.csv
+- interpretability plots
+- scaling plots
+"""
+
+# -------------------- Imports ----------------------
 from src.datasets import load_diabetes, load_housing, load_wine_quality, load_steel_plates_fault, load_shoppers
 from src.models import get_xrfm, get_xgboost, get_random_forest, train_and_time, infer_and_time, tune_xgboost, tune_random_forest, tune_xrfm
 from src.scaling import run_scaling_experiment, plot_scaling_results
@@ -14,9 +30,15 @@ from src.interpretability import (
 import numpy as np
 import pandas as pd
 
+# -------------------- Configuration ----------------------
+
+# Dataset list
 datasets = ["diabetes", "housing", "wine", "steel", "shoppers"]
+
+# Model factories
 models = {"xRFM": get_xrfm, "XGBoost": get_xgboost, "RandomForest": get_random_forest}
 
+# Task type per dataset
 dataset_tasks = {
     "diabetes": "classification",
     "housing": "regression", 
@@ -25,6 +47,7 @@ dataset_tasks = {
     "shoppers": "classification"
 }
 
+# Dataset loaders
 dataset_loaders = {
     "diabetes": load_diabetes,
     "housing":  load_housing,
@@ -36,10 +59,12 @@ dataset_loaders = {
 def get_task(dataset_name):
     return dataset_tasks[dataset_name]
 
-# Will be populated with the first successfully trained xRFM for AGOP testing
+# Stores first trained xRFM model for AGOP debugging
 _agop_test_state = {"model": None, "feature_names": None, "dataset": None}
 
 results = []
+
+# -------------------- Main Training Loop ----------------------
 for dataset in datasets:
     task = get_task(dataset)
     data = dataset_loaders[dataset]()
@@ -47,8 +72,10 @@ for dataset in datasets:
     x_train, x_val, x_test, y_train, y_val, y_test, feature_names = data
     print(f"  Train: {x_train.shape}, Val: {x_val.shape}, Test: {x_test.shape}")
 
+    # Determining number of classes for classification
     num_classes = len(np.unique(y_train)) if task == "classification" else 2
 
+    # Each model has a tuning + constructor pair
     tuners = {
         "xRFM":         (tune_xrfm,         get_xrfm),
         "XGBoost":      (tune_xgboost,       get_xgboost),
@@ -59,17 +86,21 @@ for dataset in datasets:
         print(f"\n  ── {model_name} ──")
 
         try:
+            # Tune models
             print(f"    Tuning...")
             xgb_kwargs = {"num_classes": num_classes} if model_name == "XGBoost" else {}
             best_params = tune_fn(x_train, y_train, x_val, y_val, task, **xgb_kwargs)
 
+            # Train models
             print(f"    Training final model with best params...")
             model = model_fn(task=task, **xgb_kwargs, **best_params)
             model, train_time = train_and_time(model, x_train, y_train, x_val, y_val)
 
+            # Inference
             print(f"    Running inference...")
             preds, infer_time = infer_and_time(model, x_test)
 
+            # Evaluation
             metrics = evaluate(model, x_test, y_test, task)
 
             # Capture first trained xRFM for AGOP verification later
@@ -78,6 +109,7 @@ for dataset in datasets:
                 _agop_test_state["feature_names"] = feature_names
                 _agop_test_state["dataset"]       = dataset
 
+            # Results
             results.append({
                 "dataset":               dataset,
                 "model":                 model_name,
@@ -97,6 +129,7 @@ for dataset in datasets:
             })
             continue
 
+# Save results
 pd.DataFrame(results).to_csv("results/main_table.csv", index=False)
 print("\nDone. Results saved to results/main_table.csv")
 
