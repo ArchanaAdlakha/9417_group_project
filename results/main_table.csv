@@ -1,16 +1,16 @@
 dataset,model,best_params,train_time_s,infer_time_per_sample,Accuracy,AUC,error,RMSE
-diabetes,xRFM,"{'n_iterations': np.int64(5), 'leaf_size': np.int64(100)}",4.9105,1.2e-05,0.8916666666666667,0.5831769678697053,,
-diabetes,XGBoost,"{'n_estimators': np.int64(100), 'max_depth': np.int64(3), 'learning_rate': np.float64(0.1), 'subsample': np.float64(0.8), 'colsample_bytree': np.float64(0.7)}",0.1073,1e-06,0.895,0.655857645354852,,
-diabetes,RandomForest,"{'n_estimators': np.int64(300), 'max_depth': 20, 'max_features': np.str_('sqrt')}",6.9706,0.000103,0.8946666666666667,0.6257669001803081,,
-housing,xRFM,,,,,,[enforce fail at alloc_cpu.cpp:117] data. DefaultCPUAllocator: not enough memory: you tried to allocate 812498090600 bytes.,
-housing,XGBoost,"{'n_estimators': np.int64(300), 'max_depth': np.int64(5), 'learning_rate': np.float64(0.2), 'subsample': np.float64(1.0), 'colsample_bytree': np.float64(0.8)}",0.7168,1.1e-05,,,,24426.53515625
-housing,RandomForest,"{'n_estimators': np.int64(100), 'max_depth': None, 'max_features': np.str_('sqrt')}",0.9826,0.000108,,,,30703.305346717036
-wine,xRFM,"{'n_iterations': np.int64(5), 'leaf_size': np.int64(100)}",1.1094,1.6e-05,,,,0.6416147071651581
-wine,XGBoost,"{'n_estimators': np.int64(100), 'max_depth': np.int64(7), 'learning_rate': np.float64(0.1), 'subsample': np.float64(0.8), 'colsample_bytree': np.float64(0.7)}",0.2122,1.4e-05,,,,0.5880188764994371
-wine,RandomForest,"{'n_estimators': np.int64(300), 'max_depth': 20, 'max_features': np.str_('sqrt')}",1.2726,0.000344,,,,0.5516094719215399
-steel,xRFM,"{'n_iterations': np.int64(5), 'leaf_size': np.int64(100)}",2.0301,1.2e-05,0.781491002570694,0.9294873853946699,,
-steel,XGBoost,,,,,,"[00:03:07] C:\actions-runner\_work\xgboost\xgboost\src\metric\elementwise_metric.cu:360: Check failed: preds.Size() == info.labels.Size() (2328 vs. 388) : label and prediction size not match, hint: use merror or mlogloss for multi-class classification",
-steel,RandomForest,"{'n_estimators': np.int64(300), 'max_depth': 10, 'max_features': np.str_('sqrt')}",2.3681,0.000193,0.7737789203084833,0.9496566963401541,,
-shoppers,xRFM,"{'n_iterations': np.int64(5), 'leaf_size': np.int64(100)}",155.4345,1.5e-05,0.8759124087591241,0.8814167569455543,,
-shoppers,XGBoost,"{'n_estimators': np.int64(200), 'max_depth': np.int64(5), 'learning_rate': np.float64(0.05), 'subsample': np.float64(0.8), 'colsample_bytree': np.float64(0.8)}",0.4897,3e-06,0.8937550689375506,0.9258209458859467,,
-shoppers,RandomForest,"{'n_estimators': np.int64(100), 'max_depth': 10, 'max_features': np.str_('sqrt')}",1.6017,3.3e-05,0.894566098945661,0.9183890694466645,,
+diabetes,xRFM,"{'n_iterations': np.int64(5), 'leaf_size': np.int64(100)}",8.7798,2.9e-05,0.8916666666666667,0.5831947030829713,,
+diabetes,XGBoost,"{'n_estimators': np.int64(200), 'max_depth': np.int64(3), 'learning_rate': np.float64(0.05), 'subsample': np.float64(0.8), 'colsample_bytree': np.float64(0.8)}",0.789,2e-06,0.8946666666666667,0.6628760604179598,,
+diabetes,RandomForest,"{'n_estimators': np.int64(300), 'max_depth': 20, 'max_features': np.str_('sqrt')}",3.33,5.4e-05,0.8946666666666667,0.6257669001803081,,
+housing,xRFM,,,,,,[enforce fail at alloc_cpu.cpp:117] data. DefaultCPUAllocator: not enough memory: you tried to allocate 7926810640 bytes.,
+housing,XGBoost,"{'n_estimators': np.int64(300), 'max_depth': np.int64(5), 'learning_rate': np.float64(0.2), 'subsample': np.float64(1.0), 'colsample_bytree': np.float64(0.8)}",1.1476,9e-06,,,,24426.53515625
+housing,RandomForest,"{'n_estimators': np.int64(100), 'max_depth': None, 'max_features': np.str_('sqrt')}",0.4314,5.2e-05,,,,30703.305346717036
+wine,xRFM,"{'n_iterations': np.int64(5), 'leaf_size': np.int64(100)}",0.1297,6e-06,,,,0.6415615550586325
+wine,XGBoost,"{'n_estimators': np.int64(100), 'max_depth': np.int64(7), 'learning_rate': np.float64(0.1), 'subsample': np.float64(0.8), 'colsample_bytree': np.float64(0.7)}",0.2885,1.2e-05,,,,0.5731914203905047
+wine,RandomForest,"{'n_estimators': np.int64(300), 'max_depth': 20, 'max_features': np.str_('sqrt')}",0.66,0.000193,,,,0.5516094719215399
+steel,xRFM,"{'n_iterations': np.int64(5), 'leaf_size': np.int64(100)}",0.459,7e-06,0.781491002570694,0.9294826475850541,,
+steel,XGBoost,"{'n_estimators': np.int64(300), 'max_depth': np.int64(3), 'learning_rate': np.float64(0.1), 'subsample': np.float64(1.0), 'colsample_bytree': np.float64(0.7)}",1.6383,1.9e-05,0.7866323907455013,0.9541578899824764,,
+steel,RandomForest,"{'n_estimators': np.int64(300), 'max_depth': 10, 'max_features': np.str_('sqrt')}",1.1033,0.000117,0.7737789203084833,0.9496566963401541,,
+shoppers,xRFM,"{'n_iterations': np.int64(5), 'leaf_size': np.int64(100)}",6.3157,2e-05,0.8759124087591241,0.8813794614050354,,
+shoppers,XGBoost,"{'n_estimators': np.int64(200), 'max_depth': np.int64(3), 'learning_rate': np.float64(0.05), 'subsample': np.float64(0.8), 'colsample_bytree': np.float64(0.8)}",0.468,3e-06,0.8965936739659367,0.9290934815683071,,
+shoppers,RandomForest,"{'n_estimators': np.int64(100), 'max_depth': 10, 'max_features': np.str_('sqrt')}",0.6803,1.4e-05,0.894566098945661,0.9183890694466645,,
